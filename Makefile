@@ -8,8 +8,8 @@ BLOCKS_DIR  = lib/blocks/
 include $(STM_DIR)init.mk
 include $(BLOCKS_DIR)init.mk
 
-CFILES += main.c
-INCLUDE_PATHS += .
+CFILES += main.c ppg.c  pah8001/pah8001.c
+INCLUDE_PATHS += . pah8001
 
 include $(STM_DIR)stm.mk
 include $(BLOCKS_DIR)blocks.mk
