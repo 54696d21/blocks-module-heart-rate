@@ -1,3 +1,4 @@
+/* pah8001.c - (c) 2017 Blocks Wearables Ltd. */
 #include <stdint.h>
 #include <stddef.h>
 #include "pxialg.h"

@@ -1,3 +1,4 @@
+/* kxtj2.c - (c) 2017 Blocks Wearables Ltd. */
 #include "kxtj2.h"
 
 #define KXTJ2_REG_XOUT_L        0x06
