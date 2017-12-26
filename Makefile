@@ -10,6 +10,7 @@ include $(BLOCKS_DIR)init.mk
 
 CFILES += main.c ppg.c pah8001/pah8001.c kxtj2/kxtj2.c
 INCLUDE_PATHS += .
+STATIC_LIBS += lib/pixart/libpaw8001motion3603641_0_m4f_soft_gcc.a
 
 include $(STM_DIR)stm.mk
 include $(BLOCKS_DIR)blocks.mk

@@ -11,6 +11,11 @@
 #define PAH8001_LED_STEP_MAX 31
 #define PAH8001_LED_STEP_MIN 1
 
+
+// Define to keep pixart happy
+static int errno = 0;
+int* __errno(void) { return &errno; }
+
 static bool ppg_current_change = false;
 
 static const struct { uint8_t reg; uint8_t value; } config[] =
