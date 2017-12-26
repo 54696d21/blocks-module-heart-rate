@@ -1,3 +1,4 @@
+#pragma once
 #include <stdint.h>
 
 bool PPG_Init(void);

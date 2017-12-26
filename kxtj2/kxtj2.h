@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+#include <stdbool.h>
 
 #define KXTJ2_I2C_ADDRESS 0x1C
 

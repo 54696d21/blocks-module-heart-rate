@@ -12,7 +12,7 @@ $(BUILD_DIR)%.o: %.c
 
 $(BUILD_DIR)fw.o: $(OBJS)
 	@echo LD $@
-	$(CC) $(C_FLAGS) $(INCLUDES) $(LD_FLAGS) $(BLOCKS_DIR)/platform_$(TARGET).o lib/stm/stm_$(TARGET).o $< -o build/fw.o
+	$(CC) $(C_FLAGS) $(INCLUDES) $(LD_FLAGS) $(BLOCKS_DIR)/platform_$(TARGET).o lib/stm/stm_$(TARGET).o $(OBJS) -o build/fw.o
 	
 $(BUILD_DIR)fw.bin: $(BUILD_DIR)fw.o
 	@echo objcopy

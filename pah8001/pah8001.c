@@ -1,6 +1,15 @@
 #include <stdint.h>
 #include <stddef.h>
+#include "pxialg.h"
 #include <kxtj2/kxtj2.h>
+
+#define PAH8001_LED_STEP_DELTA 2
+#define PAH8001_LED_EXPOSURE_MAX 496
+#define PAH8001_LED_EXPOSURE_MIN 32
+#define PAH8001_LED_EXPOSURE_BIG 420
+#define PAH8001_LED_EXPOSURE_SML 64
+#define PAH8001_LED_STEP_MAX 31
+#define PAH8001_LED_STEP_MIN 1
 
 static bool ppg_current_change = false;
 
@@ -68,6 +77,7 @@ static bool Pah8001_UpdateLed(bool touch)
 {
     static bool ppg_sleep = true;
     static uint8_t ppg_states = 0;
+    static uint8_t ppg_led_mode = 0;
     static uint8_t ppg_led_step = 10;
 
     if (!touch)
@@ -147,14 +157,14 @@ static bool Pah8001_UpdateLed(bool touch)
             }
             else if (ppg_led_mode == 1)
             {
-                if (exposureTime > PAH8001_LED_EXPOSURE_MAX)
+                if (exposureTime > PAH8001_LED_EXPOSURE_BIG)
                 {
                     if (ppg_led_step += PAH8001_LED_STEP_DELTA > PAH8001_LED_STEP_MAX)
                     {
                         ppg_led_mode = 0;
                         ppg_led_step = PAH8001_LED_STEP_MAX;
                     }
-                    if (!Pah8001_ReadRegister(0x38u, ppg_led_step | 0xE0u)) return false;
+                    if (!Pah8001_WriteRegister(0x38u, ppg_led_step | 0xE0u)) return false;
                     ppg_current_change = true;
                 }
                 else
@@ -165,7 +175,7 @@ static bool Pah8001_UpdateLed(bool touch)
             }
             else
             {
-                if (exposureTime < PAH8001_LED_EXPOSURE_MIN)
+                if (exposureTime < PAH8001_LED_EXPOSURE_SML)
                 {
                     ppg_led_mode = 2;
                     if (ppg_led_step <= PAH8001_LED_STEP_MIN + PAH8001_LED_STEP_DELTA)
@@ -175,7 +185,7 @@ static bool Pah8001_UpdateLed(bool touch)
                     }
                     else ppg_led_step += PAH8001_LED_STEP_DELTA;
 
-                    if (!Pah8001_ReadRegister(0x38u, ppg_led_step | 0xE0u)) return false;
+                    if (!Pah8001_WriteRegister(0x38u, ppg_led_step | 0xE0u)) return false;
                     ppg_current_change = true;
                 }
                 else
@@ -197,8 +207,6 @@ bool Pah8001_ReadRawData(uint8_t buffer[13])
     static uint8_t ppg_frame_count = 0;
 
     uint8_t value;
-    if (size < 13) return false;
-
     if (!Pah8001_WriteRegister(0x7Fu, 0x00u)) return false;
     if (!Pah8001_ReadRegister(0x59u, &value, 1)) return false;
 
@@ -208,11 +216,9 @@ bool Pah8001_ReadRawData(uint8_t buffer[13])
     if (!Pah8001_ReadRegister(0x68u, buffer, 1)) return false;
     buffer[0] &= 0xFu;
 
-    if (buffer[0] == 1)
+    if (*buffer++ == 1)
     {
         uint8_t tmp[4];
-        buffer++:
-
         if (!Pah8001_ReadRegister(0x7Fu, &tmp, 4)) return false;
         for (size_t i = 0; i < 4; i++) {
             *buffer++ = tmp[i] & 0xFFu;

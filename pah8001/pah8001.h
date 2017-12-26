@@ -1,6 +1,7 @@
 #pragma once
 #include <stdint.h>
 #include <stddef.h>
+#include <stdbool.h>
 
 bool Pah8001_ReadRawData(uint8_t buffer[13]);
 

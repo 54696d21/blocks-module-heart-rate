@@ -1,4 +1,4 @@
-#include <stm3214xx_hal.h>
+#include <stm32l4xx_hal.h>
 #include "pah8001/pah8001.h"
 #include "kxtj2/kxtj2.h"
 
@@ -7,16 +7,21 @@ static I2C_HandleTypeDef i2c2;
 
 bool Kxtj2_WriteRegister(uint8_t reg, uint8_t data)
 {
-    uint8_t packet[] = { addr, data };
+    uint8_t packet[] = { reg, data };
     return HAL_I2C_Master_Transmit(&i2c2, KXTJ2_I2C_ADDRESS, packet, 2, 1000) == HAL_OK;
 }
 
-bool Kxtj2_ReadRegister(uint8_t addr, uint8_t* buffer)
+bool Kxtj2_ReadRegister(uint8_t reg, uint8_t* buffer)
 {
-    if (HAL_I2C_Master_Transmit(&i2c2, KXTJ2_I2C_ADDRESS, &addr, 1, 1000) != HAL_OK) return false;
-    return HAL_I2C_Master_Receive(&i2c2, KXTJ2_I2C_ADDRESS, buffer, 1, 1000) != HAL_OK);
+    if (HAL_I2C_Master_Transmit(&i2c2, KXTJ2_I2C_ADDRESS, &reg, 1, 1000) != HAL_OK) return false;
+    return HAL_I2C_Master_Receive(&i2c2, KXTJ2_I2C_ADDRESS, buffer, 1, 1000) != HAL_OK;
 }
 
+
+void Pah8001_Delay(uint8_t ms)
+{
+    HAL_Delay(ms);
+}
 
 bool PPG_Init(void)
 {
@@ -30,8 +35,8 @@ bool PPG_Init(void)
     i2c2.Init.NoStretchMode = I2C_NOSTRETCH_DISABLED;
     i2c2.Init.OwnAddress2Masks = I2C_OA2_NOMASK;
     i2c2.Init.GeneralCallMode = I2C_GENERALCALL_DISABLED;
-    HAL_I2C_Init(&hi2c2);
-    HAL_I2CEx_AnalogFilter_Config(&hi2c2, I2C_ANALOGFILTER_ENABLED);
+    HAL_I2C_Init(&i2c2);
+    HAL_I2CEx_AnalogFilter_Config(&i2c2, I2C_ANALOGFILTER_ENABLED);
 
     return Pah8001_Reset();
 }
@@ -82,7 +87,7 @@ bool PPG_Disable(void)
 bool PPG_GetHR(float* value_out)
 {
     uint8_t buffer[13];
-    if (!Pah8001_GetRawData(buffer)) return false;
+    if (!Pah8001_ReadRawData(buffer)) return false;
     return Pah8001_HRFromRawData(buffer, value_out);
 }
 
@@ -92,7 +97,7 @@ size_t PPG_GetRawData(uint8_t* buffer, size_t length)
     if (!Pah8001_GetRawData(data)) return 0;
 
     size_t i = 0;
-    for (i < sizeof(data) && i < length; i++) {
+    for (; i < sizeof(data) && i < length; i++) {
         buffer[i] = data[i];
     }
     return i;
