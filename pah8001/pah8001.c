@@ -3,6 +3,9 @@
 #include <stddef.h>
 #include "pxialg.h"
 #include <kxtj2/kxtj2.h>
+#ifdef UART_DEBUG
+#include "blocks-fw.h"
+#endif
 
 #define PAH8001_LED_STEP_DELTA 2
 #define PAH8001_LED_EXPOSURE_MAX 496
@@ -222,14 +225,18 @@ bool Pah8001_ReadRawData(uint8_t buffer[13])
     if (!Pah8001_ReadRegister(0x68u, buffer, 1)) return false;
     buffer[0] &= 0xFu;
 
-    if (*buffer++ == 1)
+    if (*buffer++ != 0)//0 means no data, 1~15 mean have data
     {
         uint8_t tmp[4];
-        if (!Pah8001_ReadRegister(0x7Fu, &tmp, 4)) return false;
+/* 0x7f is change bank register,
+ * 0x64~0x67 is HR_DATA
+ * 0x1a~0x1C is HR_DATA_Algo
+ */
+        if (!Pah8001_ReadRegister(0x64u, &tmp, 4)) return false;
         for (size_t i = 0; i < 4; i++) {
             *buffer++ = tmp[i] & 0xFFu;
         }
-        if (!Pah8001_ReadRegister(0x7Fu, &tmp, 3)) return false;
+        if (!Pah8001_ReadRegister(0x1au, &tmp, 3)) return false;
         for (size_t i = 0; i < 3; i++) {
             *buffer++ = tmp[i] & 0xFFu;
         }
