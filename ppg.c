@@ -17,7 +17,6 @@ bool Kxtj2_WriteRegister(uint8_t reg, uint8_t data)
 bool Kxtj2_ReadRegister(uint8_t reg, uint8_t* buffer)
 {
     if (HAL_I2C_Master_Transmit(&i2c2, KXTJ2_I2C_ADDRESS, &reg, 1, 1000) != HAL_OK) return false;
-//I2C Read need set bit0 to 1 and use != will return wrong message
     return HAL_I2C_Master_Receive(&i2c2, KXTJ2_I2C_ADDRESS | 1, buffer, 1, 1000) == HAL_OK;
 }
 
@@ -31,13 +30,14 @@ bool PPG_Init(void)
 {
     // Configure GPIO as I2C
     GPIO_InitTypeDef GPIO_InitStruct;
-    GPIO_InitStruct.Pin = GPIO_PIN_11|GPIO_PIN_10;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
-    GPIO_InitStruct.Pull = GPIO_PULLUP;
-    GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
+    GPIO_InitStruct.Pin       = GPIO_PIN_11|GPIO_PIN_10;
+    GPIO_InitStruct.Mode      = GPIO_MODE_AF_OD;
+    GPIO_InitStruct.Pull      = GPIO_PULLUP;
+    GPIO_InitStruct.Speed     = GPIO_SPEED_HIGH;
     GPIO_InitStruct.Alternate = GPIO_AF4_I2C2;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
     __I2C2_CLK_ENABLE();
+
     // Configure I2C
     i2c2.Instance = I2C2;
     i2c2.Init.Timing = 0x00303D5B;
@@ -97,18 +97,20 @@ bool PPG_Disable(void)
 }
 
 
-bool PPG_GetHR(float* value_out)
+uint8_t PPG_GetHR(float* value_out)
 {
     uint8_t buffer[13];
 
-    if (!Pah8001_ReadRawData(buffer))
+    uint8_t res = Pah8001_ReadRawData(buffer);
+
+    if (res != 0)
     {
 #ifdef UART_DEBUG
         fw_info("read fail" CRLF);
 #endif
-        return false;
+        return res;
     }
-    return Pah8001_HRFromRawData(buffer, value_out);
+    return Pah8001_HRFromRawData(buffer, value_out) ? 0 : 0x30;
 }
 
 size_t PPG_GetRawData(uint8_t* buffer, size_t length)

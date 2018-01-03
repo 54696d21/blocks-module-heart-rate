@@ -31,7 +31,7 @@ bool PPG_Reset(void);
  * \param value_out Reference to the value to which to write the result.
  * \return true if successful, false otherwise.
  */
-bool PPG_GetHR(float* value_out);
+uint8_t PPG_GetHR(float* value_out);
 
 /**
  * Reads the current raw heart rate data.

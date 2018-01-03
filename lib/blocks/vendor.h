@@ -18,6 +18,7 @@ extern "C" {
 
 #include <stdint.h>
 #include <stddef.h>
+#include <stdbool.h>
 
 /* Define module label (20 wchar) */
 #define BLOCKS_MODULE_LABEL				u"Sample Module"
@@ -142,7 +143,6 @@ typedef struct _vendor_module_info_t
 	BLOCKS_MODULE_MODELID, \
 }
 
-typedef uint8_t bool;
 typedef struct __attribute((packed)) blocks_GpsLocation 
 {
 	uint32_t lattitude;

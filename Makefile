@@ -1,6 +1,6 @@
 BUILD_DIR  ?= build/
 TARGET     ?= STM32L4X6
-VERSION    ?= 1
+VERSION    ?= 2
 
 STM_DIR     = lib/stm/
 BLOCKS_DIR  = lib/blocks/

@@ -1,6 +1,14 @@
 /* main.c - (c) 2017 Blocks Wearables Ltd. */
 #include "vendor.h"
 #include "ppg.h"
+#include <stdbool.h>
+
+
+static uint8_t heartRate;
+static bool dataReady = false;
+static bool initRes = true;
+static bool running = false;
+
 
 static blocks_errorcode_t get_rate(uint8_t* rate_out)
 {
@@ -10,30 +18,45 @@ static blocks_errorcode_t get_rate(uint8_t* rate_out)
 
 static blocks_errorcode_t reset(void)
 {
+    dataReady = false;
+    running = false;
     return PPG_Reset() ? ERROR_NONE : ERROR_HARDWARE;
 }
 
 static blocks_errorcode_t set_enabled(bool enabled)
 {
     bool result = enabled ? PPG_Enable() : PPG_Disable();
+    running = result && enabled;
+    dataReady = false;
     return result ? ERROR_NONE : ERROR_HARDWARE;
 }
 
 static blocks_errorcode_t get_heart_rate(uint8_t* rate)
 {
-    return PPG_GetHR(rate) ? ERROR_NONE : ERROR_DATA_UNAVAILABLE;
+    *rate = heartRate;
+    return dataReady ? ERROR_NONE : ERROR_DATA_UNAVAILABLE;
 }
 
 void blocks_initializeModule(void)
 {
     if (!PPG_Init()) {
-		blocks_notify(0xFF); // ModuleError
+        initRes = false;
+        blocks_vendorNotify(0xFF); // ModuleError
     }
 }
 
-void blocks_main (void) {
-    while (1) {
+void blocks_main(void)
+{
+    while (1)
+    {
         module_vendor_idle();
+        if (!initRes) blocks_vendorNotify(0xADBA);
+
+        uint8_t value;
+        uint8_t res = PPG_GetHR(&value);
+        if (res != 0 && res != 0x22) { blocks_vendorNotify(res); }
+        dataReady = res == 0;
+        if (dataReady) heartRate = value;
     }
 }
 

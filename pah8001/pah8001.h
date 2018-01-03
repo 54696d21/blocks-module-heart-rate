@@ -12,7 +12,7 @@
  * \param buffer Array into which to write data.
  * \return true if successful, false otherwise.
  */
-bool Pah8001_ReadRawData(uint8_t buffer[13]);
+uint8_t Pah8001_ReadRawData(uint8_t buffer[13]);
 
 /**
  * Gets the heart rate value from the given raw data.
@@ -20,7 +20,7 @@ bool Pah8001_ReadRawData(uint8_t buffer[13]);
  * \param hr_out Reference to value to which to write the heart rate.
  * \return true if successful, false otherwise.
  */
-bool Pah8001_HRFromRawData(const uint8_t rawdata[13], float* hr_out);
+uint8_t Pah8001_HRFromRawData(const uint8_t rawdata[13], float* hr_out);
 
 /**
  * Gets whether the current heart rate value is valid. Call

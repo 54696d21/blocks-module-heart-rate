@@ -92,7 +92,7 @@ static bool Pah8001_UpdateLed(bool touch)
     if (!touch)
     {
         if (!Pah8001_WriteRegister(0x7Fu, 0x00u)) return false;
-        if (!Pah8001_WriteRegister(0x05u, 0x88u)) return false;
+        if (!Pah8001_WriteRegister(0x05u, 0xB8u)) return false;
         if (!Pah8001_WriteRegister(0x7Fu, 0x01u)) return false;
         if (!Pah8001_WriteRegister(0x42u, 0xA0u)) return false;
         if (!Pah8001_WriteRegister(0x38u, 0xE5u)) return false;
@@ -114,9 +114,10 @@ static bool Pah8001_UpdateLed(bool touch)
         // Read exposure time
         if (!Pah8001_ReadRegister(0x33, &value, 1)) return false;
         exposureTime = (value & 0x3u) << 8;
-        if (!Pah8001_ReadRegister(0x33, &value, 1)) return false;
+        if (!Pah8001_ReadRegister(0x32, &value, 1)) return false;
         exposureTime |= value;
 
+        if (!Pah8001_WriteRegister(0x7Fu, 0x01u)) return false;
         if (ppg_sleep)
         {
             if (!Pah8001_WriteRegister(0x38u, (0xE0u | 10))) return false;
@@ -192,7 +193,7 @@ static bool Pah8001_UpdateLed(bool touch)
                         ppg_led_mode = 0;
                         ppg_led_step = PAH8001_LED_STEP_MIN;
                     }
-                    else ppg_led_step += PAH8001_LED_STEP_DELTA;
+                    else ppg_led_step -= PAH8001_LED_STEP_DELTA;
 
                     if (!Pah8001_WriteRegister(0x38u, ppg_led_step | 0xE0u)) return false;
                     ppg_current_change = true;
@@ -211,32 +212,32 @@ static bool Pah8001_UpdateLed(bool touch)
     return true;
 }
 
-bool Pah8001_ReadRawData(uint8_t buffer[13])
+uint8_t Pah8001_ReadRawData(uint8_t buffer[13])
 {
     static uint8_t ppg_frame_count = 0;
 
     uint8_t value;
-    if (!Pah8001_WriteRegister(0x7Fu, 0x00u)) return false;
-    if (!Pah8001_ReadRegister(0x59u, &value, 1)) return false;
+    if (!Pah8001_WriteRegister(0x7Fu, 0x00u)) return 0x11;
+    if (!Pah8001_ReadRegister(0x59u, &value, 1)) return 0x12;
 
-    if (!Pah8001_UpdateLed(value & 0x80u == 0x80u)) return false;
-    if (!Pah8001_WriteRegister(0x7Fu, 0x01u)) return false;
+    if (!Pah8001_UpdateLed(value & 0x80u == 0x80u)) return 0x13;
+    if (!Pah8001_WriteRegister(0x7Fu, 0x01u)) return 0x14;
 
-    if (!Pah8001_ReadRegister(0x68u, buffer, 1)) return false;
+    if (!Pah8001_ReadRegister(0x68u, buffer, 1)) return 0x15;
     buffer[0] &= 0xFu;
 
-    if (*buffer++ != 0)//0 means no data, 1~15 mean have data
+    if (*buffer++ != 0) //0 means no data, 1~15 mean have data
     {
         uint8_t tmp[4];
-/* 0x7f is change bank register,
- * 0x64~0x67 is HR_DATA
- * 0x1a~0x1C is HR_DATA_Algo
- */
-        if (!Pah8001_ReadRegister(0x64u, &tmp, 4)) return false;
+        /* 0x7f is change bank register,
+        * 0x64~0x67 is HR_DATA
+        * 0x1a~0x1C is HR_DATA_Algo
+        */
+        if (!Pah8001_ReadRegister(0x64u, &tmp, 4)) return 0x16;
         for (size_t i = 0; i < 4; i++) {
             *buffer++ = tmp[i] & 0xFFu;
         }
-        if (!Pah8001_ReadRegister(0x1au, &tmp, 3)) return false;
+        if (!Pah8001_ReadRegister(0x1au, &tmp, 3)) return 0x17;
         for (size_t i = 0; i < 3; i++) {
             *buffer++ = tmp[i] & 0xFFu;
         }
@@ -245,26 +246,26 @@ bool Pah8001_ReadRawData(uint8_t buffer[13])
         *buffer++ = 0;
         *buffer++ = ppg_current_change ? 1 : 0;
 
-        if (!Pah8001_WriteRegister(0x7Fu, 0x00u)) return false;
-        if (!Pah8001_ReadRegister(0x59u, buffer, 1)) return false;
+        if (!Pah8001_WriteRegister(0x7Fu, 0x00u)) return 0x18;
+        if (!Pah8001_ReadRegister(0x59u, buffer, 1)) return 0x19;
         *buffer++ &= 0x80u;
         *buffer = tmp[1] & 0xFFu;
     }
     else
     {
-        if (!Pah8001_WriteRegister(0x7Fu, 0x00u)) return false;
-        return false;
+        if (!Pah8001_WriteRegister(0x7Fu, 0x00u)) return 0x20;
+        return 0x22;
     }
-    return true;
+    return 0;
 }
 
-bool Pah8001_HRFromRawData(const uint8_t rawdata[13], float* hr_out)
+uint8_t Pah8001_HRFromRawData(const uint8_t rawdata[13], float* hr_out)
 {
     float axis3[3]; Kxtj2_GetXYZ(axis3);
-    if (PxiAlg_Process(rawdata, axis3) != FLAG_DATA_READY) return false;
+    if (PxiAlg_Process(rawdata, axis3) != FLAG_DATA_READY) return 0x23;
 
     PxiAlg_HrGet(hr_out);
-    return true;
+    return 0;
 }
 
 bool Pah8001_HRValid(void)
