@@ -6,6 +6,11 @@
 #ifdef UART_DEBUG
 #include "blocks-fw.h"
 #endif
+//#define PATTEN_VERIFY
+#ifdef PATTEN_VERIFY
+#include "pah8001testpatten.h"
+uint8_t po=0;
+#endif
 
 #define PAH8001_LED_STEP_DELTA 2
 #define PAH8001_LED_EXPOSURE_MAX 496
@@ -215,7 +220,6 @@ static bool Pah8001_UpdateLed(bool touch)
 uint8_t Pah8001_ReadRawData(uint8_t buffer[13])
 {
     static uint8_t ppg_frame_count = 0;
-
     uint8_t value;
     if (!Pah8001_WriteRegister(0x7Fu, 0x00u)) return 0x11;
     if (!Pah8001_ReadRegister(0x59u, &value, 1)) return 0x12;
@@ -223,33 +227,39 @@ uint8_t Pah8001_ReadRawData(uint8_t buffer[13])
     if (!Pah8001_UpdateLed(value & 0x80u == 0x80u)) return 0x13;
     if (!Pah8001_WriteRegister(0x7Fu, 0x01u)) return 0x14;
 
-    if (!Pah8001_ReadRegister(0x68u, buffer, 1)) return 0x15;
-    buffer[0] &= 0xFu;
+    if (!Pah8001_ReadRegister(0x68u, &value, 1)) return 0x15;
+    buffer[0] = value & 0xFu;
 
-    if (*buffer++ != 0) //0 means no data, 1~15 mean have data
+
+    if (buffer[0] != 0) //0 means no data, 1~15 mean have data
     {
         uint8_t tmp[4];
         /* 0x7f is change bank register,
         * 0x64~0x67 is HR_DATA
         * 0x1a~0x1C is HR_DATA_Algo
         */
+#ifdef PATTEN_VERIFY
+        for (size_t i = 1; i < 5; i++)
+            buffer[i]=PPG_Data[po][i];
+        po++;
+#else
         if (!Pah8001_ReadRegister(0x64u, &tmp, 4)) return 0x16;
         for (size_t i = 0; i < 4; i++) {
-            *buffer++ = tmp[i] & 0xFFu;
+            buffer[1+i] = tmp[i] & 0xFFu;
         }
+#endif
         if (!Pah8001_ReadRegister(0x1au, &tmp, 3)) return 0x17;
         for (size_t i = 0; i < 3; i++) {
-            *buffer++ = tmp[i] & 0xFFu;
+            buffer[5+i] = tmp[i] & 0xFFu;
         }
 
-        *buffer++ = ppg_frame_count++;
-        *buffer++ = 0;
-        *buffer++ = ppg_current_change ? 1 : 0;
-
+        buffer[8] = ppg_frame_count++;
+        buffer[9] = 0;
+        buffer[10] = ppg_current_change ? 1 : 0;
         if (!Pah8001_WriteRegister(0x7Fu, 0x00u)) return 0x18;
-        if (!Pah8001_ReadRegister(0x59u, buffer, 1)) return 0x19;
-        *buffer++ &= 0x80u;
-        *buffer = tmp[1] & 0xFFu;
+        if (!Pah8001_ReadRegister(0x59u, &value, 1)) return 0x19;
+        buffer[11] = value & 0x80u;
+        buffer[12] = buffer[6] & 0xFFu;
     }
     else
     {
@@ -263,9 +273,8 @@ uint8_t Pah8001_HRFromRawData(const uint8_t rawdata[13], float* hr_out)
 {
     float axis3[3]; Kxtj2_GetXYZ(axis3);
     if (PxiAlg_Process(rawdata, axis3) != FLAG_DATA_READY) return 0x23;
-
     PxiAlg_HrGet(hr_out);
-    return 0;
+    return 1;
 }
 
 bool Pah8001_HRValid(void)

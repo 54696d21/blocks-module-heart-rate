@@ -2,6 +2,9 @@
 #include "vendor.h"
 #include "ppg.h"
 #include <stdbool.h>
+#ifdef UART_DEBUG
+#include "blocks-fw.h"
+#endif
 
 
 static uint8_t heartRate;
@@ -52,11 +55,15 @@ void blocks_main(void)
         module_vendor_idle();
         if (!initRes) blocks_vendorNotify(0xADBA);
 
-        uint8_t value;
+        float value;
         uint8_t res = PPG_GetHR(&value);
         if (res != 0 && res != 0x22) { blocks_vendorNotify(res); }
         dataReady = res == 0;
-        if (dataReady) heartRate = value;
+        if (dataReady)
+        {
+            heartRate = value;
+            fw_info("%d ",(uint16_t)value);
+        }
     }
 }
 

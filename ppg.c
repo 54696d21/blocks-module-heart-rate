@@ -5,9 +5,42 @@
 #include "blocks-fw.h"
 #endif
 
+//#define VERIFY_LIB
+#ifdef VERIFY_LIB
+#include "pah8001testpatten.h"
+#endif
 static I2C_HandleTypeDef i2c2;
 
 
+#ifdef VERIFY_LIB
+float verify_library()
+{
+    int i = 0 ;
+    int32_t version = 0;
+    float myHR = 0 ;
+    float grade = 0 ;
+    int8_t ready_flag;
+    int ret = 0;
+    version = PxiAlg_Version();
+    fw_info("Library version %d" CRLF,version);
+    for(i=0; i<sizeof(PPG_Data)/sizeof(PPG_Data[0]); i++)
+    {
+        ret = PxiAlg_Process((unsigned char*)PPG_Data[i], (float *)fMEMS_Data[i]);
+        if(ret != 0)
+        {
+            fw_info("Error" CRLF);
+        }
+        PxiAlg_HrGet(&myHR);
+        PxiAlg_GetSigGrade(&grade);
+        if(myHR != 0)
+        {
+            ready_flag = PxiAlg_GetReadyFlag();
+        }
+    }
+    PxiAlg_HrGet(&myHR);
+    return myHR ;
+}
+#endif
 bool Kxtj2_WriteRegister(uint8_t reg, uint8_t data)
 {
     uint8_t packet[] = { reg, data };
@@ -102,6 +135,11 @@ uint8_t PPG_GetHR(float* value_out)
     uint8_t buffer[13];
 
     uint8_t res = Pah8001_ReadRawData(buffer);
+#ifdef VERIFY_LIB
+    float HR;
+    HR = verify_library();
+    fw_info("HR %d" CRLF,(uint16_t)HR);
+#endif
 
     if (res != 0)
     {
