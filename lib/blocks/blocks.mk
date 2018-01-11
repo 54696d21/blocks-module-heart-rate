@@ -17,3 +17,7 @@ $(BUILD_DIR)fw.o: $(OBJS)
 $(BUILD_DIR)fw.bin: $(BUILD_DIR)fw.o
 	@echo objcopy
 	$(PREFIX)objcopy -O binary $< $@
+
+clean:
+	@echo RM $(BUILD_DIR)
+	@-rm -fr $(BUILD_DIR)
