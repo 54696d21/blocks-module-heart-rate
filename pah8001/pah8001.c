@@ -3,14 +3,6 @@
 #include <stddef.h>
 #include "pxialg.h"
 #include <kxtj2/kxtj2.h>
-#ifdef UART_DEBUG
-#include "blocks-fw.h"
-#endif
-//#define PATTEN_VERIFY
-#ifdef PATTEN_VERIFY
-#include "pah8001testpatten.h"
-uint8_t po=0;
-#endif
 
 #define PAH8001_LED_STEP_DELTA 2
 #define PAH8001_LED_EXPOSURE_MAX 496
@@ -38,7 +30,7 @@ static const struct { uint8_t reg; uint8_t value; } config[] =
     { 0x2Du, 0x64u },
     { 0x42u, 0x20u },
     { 0x48u, 0x00u },
-    { 0x4Du, 0x1Bu },
+    { 0x4Du, 0x1Au },
     { 0x7Au, 0xB5u },
     { 0x7Fu, 0x01u },
     { 0x07u, 0x48u },
@@ -219,12 +211,19 @@ static bool Pah8001_UpdateLed(bool touch)
 
 uint8_t Pah8001_ReadRawData(uint8_t buffer[13])
 {
-    static uint8_t ppg_frame_count = 0;
+    static uint8_t ppg_frame_count = 0,touch_cnt = 0;
     uint8_t value;
     if (!Pah8001_WriteRegister(0x7Fu, 0x00u)) return 0x11;
     if (!Pah8001_ReadRegister(0x59u, &value, 1)) return 0x12;
-
-    if (!Pah8001_UpdateLed(value & 0x80u == 0x80u)) return 0x13;
+    if (value == 0x80)
+        touch_cnt = 0;
+    if (touch_cnt++<250)
+        if (!Pah8001_UpdateLed(1)) return 0x13;
+    else
+    {
+        if (!Pah8001_UpdateLed(0)) return 0x13;
+        touch_cnt = 252;
+    }
     if (!Pah8001_WriteRegister(0x7Fu, 0x01u)) return 0x14;
 
     if (!Pah8001_ReadRegister(0x68u, &value, 1)) return 0x15;
@@ -238,23 +237,17 @@ uint8_t Pah8001_ReadRawData(uint8_t buffer[13])
         * 0x64~0x67 is HR_DATA
         * 0x1a~0x1C is HR_DATA_Algo
         */
-#ifdef PATTEN_VERIFY
-        for (size_t i = 1; i < 5; i++)
-            buffer[i]=PPG_Data[po][i];
-        po++;
-#else
         if (!Pah8001_ReadRegister(0x64u, &tmp, 4)) return 0x16;
         for (size_t i = 0; i < 4; i++) {
             buffer[1+i] = tmp[i] & 0xFFu;
         }
-#endif
         if (!Pah8001_ReadRegister(0x1au, &tmp, 3)) return 0x17;
         for (size_t i = 0; i < 3; i++) {
             buffer[5+i] = tmp[i] & 0xFFu;
         }
 
         buffer[8] = ppg_frame_count++;
-        buffer[9] = 0;
+        buffer[9] = 47;
         buffer[10] = ppg_current_change ? 1 : 0;
         if (!Pah8001_WriteRegister(0x7Fu, 0x00u)) return 0x18;
         if (!Pah8001_ReadRegister(0x59u, &value, 1)) return 0x19;

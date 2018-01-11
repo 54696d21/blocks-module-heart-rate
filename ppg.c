@@ -1,46 +1,10 @@
 #include <stm32l4xx_hal.h>
 #include "pah8001/pah8001.h"
 #include "kxtj2/kxtj2.h"
-#ifdef UART_DEBUG
-#include "blocks-fw.h"
-#endif
 
-//#define VERIFY_LIB
-#ifdef VERIFY_LIB
-#include "pah8001testpatten.h"
-#endif
 static I2C_HandleTypeDef i2c2;
 
 
-#ifdef VERIFY_LIB
-float verify_library()
-{
-    int i = 0 ;
-    int32_t version = 0;
-    float myHR = 0 ;
-    float grade = 0 ;
-    int8_t ready_flag;
-    int ret = 0;
-    version = PxiAlg_Version();
-    fw_info("Library version %d" CRLF,version);
-    for(i=0; i<sizeof(PPG_Data)/sizeof(PPG_Data[0]); i++)
-    {
-        ret = PxiAlg_Process((unsigned char*)PPG_Data[i], (float *)fMEMS_Data[i]);
-        if(ret != 0)
-        {
-            fw_info("Error" CRLF);
-        }
-        PxiAlg_HrGet(&myHR);
-        PxiAlg_GetSigGrade(&grade);
-        if(myHR != 0)
-        {
-            ready_flag = PxiAlg_GetReadyFlag();
-        }
-    }
-    PxiAlg_HrGet(&myHR);
-    return myHR ;
-}
-#endif
 bool Kxtj2_WriteRegister(uint8_t reg, uint8_t data)
 {
     uint8_t packet[] = { reg, data };
@@ -62,12 +26,13 @@ void Pah8001_Delay(uint8_t ms)
 bool PPG_Init(void)
 {
     // Configure GPIO as I2C
-    GPIO_InitTypeDef GPIO_InitStruct;
-    GPIO_InitStruct.Pin       = GPIO_PIN_11|GPIO_PIN_10;
-    GPIO_InitStruct.Mode      = GPIO_MODE_AF_OD;
-    GPIO_InitStruct.Pull      = GPIO_PULLUP;
-    GPIO_InitStruct.Speed     = GPIO_SPEED_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF4_I2C2;
+	GPIO_InitTypeDef GPIO_InitStruct = {
+        .Pin = GPIO_PIN_11 | GPIO_PIN_10,
+        .Mode = GPIO_MODE_AF_OD,
+        .Pull = GPIO_PULLUP,
+        .Speed = GPIO_SPEED_HIGH,
+        .Alternate = GPIO_AF4_I2C2
+    };
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
     __I2C2_CLK_ENABLE();
 
@@ -135,17 +100,9 @@ uint8_t PPG_GetHR(float* value_out)
     uint8_t buffer[13];
 
     uint8_t res = Pah8001_ReadRawData(buffer);
-#ifdef VERIFY_LIB
-    float HR;
-    HR = verify_library();
-    fw_info("HR %d" CRLF,(uint16_t)HR);
-#endif
 
     if (res != 0)
     {
-#ifdef UART_DEBUG
-        fw_info("read fail" CRLF);
-#endif
         return res;
     }
     return Pah8001_HRFromRawData(buffer, value_out) ? 0 : 0x30;
