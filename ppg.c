@@ -19,38 +19,7 @@ void Pah8001_Delay(uint8_t ms) {
 	HAL_Delay(ms);
 }
 
-bool PPG_Init(void) {
-	// Configure GPIO as I2C
-	GPIO_InitTypeDef GPIO_InitStruct = {
-		.Pin = GPIO_PIN_11 | GPIO_PIN_10,
-		.Mode = GPIO_MODE_AF_OD,
-		.Pull = GPIO_PULLUP,
-		.Speed = GPIO_SPEED_HIGH,
-		.Alternate = GPIO_AF4_I2C2
-	};
-	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-	__I2C2_CLK_ENABLE();
-
-	// Configure I2C
-	I2C_HandleTypeDef i2c = {
-		.Instance = I2C2,
-		.Init.Timing = 0x00303D5B,
-		.Init.OwnAddress1 = 0,
-		.Init.DualAddressMode = I2C_DUALADDRESS_DISABLED,
-		.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT,
-		.Init.OwnAddress2 = 0,
-		.Init.NoStretchMode = I2C_NOSTRETCH_DISABLED,
-		.Init.OwnAddress2Masks = I2C_OA2_NOMASK,
-		.Init.GeneralCallMode = I2C_GENERALCALL_DISABLED,
-	};
-	HAL_I2C_Init(&i2c);
-	HAL_I2CEx_AnalogFilter_Config(&i2c, I2C_ANALOGFILTER_ENABLED);
-	ppg_i2c_2 = i2c;
-
-	return Pah8001_Reset();
-}
-
-bool PPG_Reset(void) {
+bool ppg_reset(void) {
 	return Pah8001_Reset();
 }
 
@@ -79,16 +48,16 @@ bool Pah8001_WriteRegister(uint8_t reg, uint8_t value) {
 	return tries < 5;
 }
 
-bool PPG_Enable(void) {
+bool ppg_enable(void) {
 	return Pah8001_PowerOn();
 }
 
-bool PPG_Disable(void) {
+bool ppg_disable(void) {
 	return Pah8001_PowerOff();
 }
 
 
-uint8_t PPG_GetHR(float* value_out) {
+uint8_t ppg_getHR(float* value_out) {
 	uint8_t buffer[13];
 
 	uint8_t res = Pah8001_ReadRawData(buffer);
@@ -100,7 +69,7 @@ uint8_t PPG_GetHR(float* value_out) {
 	return Pah8001_HRFromRawData(buffer, value_out) ? 0 : 0x30;
 }
 
-size_t PPG_GetRawData(uint8_t* buffer, size_t length) {
+size_t ppg_getRawData(uint8_t* buffer, size_t length) {
 	uint8_t data[13];
 	if (!Pah8001_GetRawData(data)) return 0;
 
@@ -111,22 +80,53 @@ size_t PPG_GetRawData(uint8_t* buffer, size_t length) {
 	return i;
 }
 
-uint8_t PPG_GetRate(void) {
+uint8_t ppg_getRate(void) {
 	return 20;
 }
 
-bool PPG_Run(float* heartRate) {
+bool ppg_run(float* value_out) {
 	bool dataReady = false;
 
 	HAL_Delay(47);
 
 	float value = 0.f;
-	uint8_t res = PPG_GetHR(&value);
+	uint8_t res = ppg_getHR(&value);
 
 	dataReady = (res == 0);
-	if (dataReady && *heartRate != value) {
-		*heartRate = value;
+	if (dataReady && *value_out!= value) {
+		*value_out = value;
 	}
 
 	return dataReady;
+}
+
+bool ppg_init(void) {
+	// Configure GPIO as I2C
+	GPIO_InitTypeDef GPIO_InitStruct = {
+		.Pin = GPIO_PIN_11 | GPIO_PIN_10,
+		.Mode = GPIO_MODE_AF_OD,
+		.Pull = GPIO_PULLUP,
+		.Speed = GPIO_SPEED_HIGH,
+		.Alternate = GPIO_AF4_I2C2
+	};
+	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+	__I2C2_CLK_ENABLE();
+
+	// Configure I2C
+	I2C_HandleTypeDef i2c = {
+		.Instance = I2C2,
+		.Init.Timing = 0x00303D5B,
+		.Init.OwnAddress1 = 0,
+		.Init.DualAddressMode = I2C_DUALADDRESS_DISABLED,
+		.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT,
+		.Init.OwnAddress2 = 0,
+		.Init.NoStretchMode = I2C_NOSTRETCH_DISABLED,
+		.Init.OwnAddress2Masks = I2C_OA2_NOMASK,
+		.Init.GeneralCallMode = I2C_GENERALCALL_DISABLED,
+	};
+	HAL_I2C_Init(&i2c);
+	HAL_I2CEx_AnalogFilter_Config(&i2c, I2C_ANALOGFILTER_ENABLED);
+	ppg_i2c_2 = i2c;
+
+	return Pah8001_Reset();
 }
