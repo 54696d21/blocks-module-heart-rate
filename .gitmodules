@@ -1,0 +1,3 @@
+[submodule "lib/pixart"]
+	path = lib/pixart
+	url = git@github.com:pixartinc/pah8001_libs.git
