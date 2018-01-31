@@ -124,3 +124,20 @@ uint8_t PPG_GetRate(void)
 {
     return 20;
 }
+
+bool PPG_Run(float* heartRate)
+{
+    bool dataReady = false;
+
+    HAL_Delay(47);
+
+    float value = 0.f;
+    uint8_t res = PPG_GetHR(&value);
+
+    dataReady = (res == 0);
+    if (dataReady && *heartRate != value) {
+        *heartRate = value;
+    }
+
+    return dataReady;
+}

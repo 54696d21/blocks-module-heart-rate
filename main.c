@@ -48,25 +48,14 @@ void blocks_main(void)
 {
     while (1)
     {
-        module_vendor_idle();
         if (!initRes) blocks_vendorNotify(0xADBA);
 
         if (!running) {
-            HAL_Delay(100);
+            module_vendor_idle();
             continue;
         }
 
-        float value = 0.f;
-        HAL_Delay(47);
-        uint8_t res = PPG_GetHR(&value);
-        if (res != 0 && res != 0x22) {/* blocks_vendorNotify(res); */}
-        dataReady = res == 0;
-        if (dataReady) {
-            if(heartRate != value) {
-                heartRate = value;
-                //blocks_vendorNotify(heartRate);
-            }
-        }
+        dataReady = PPG_Run(&heartRate);
     }
 }
 
