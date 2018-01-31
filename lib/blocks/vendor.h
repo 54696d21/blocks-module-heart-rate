@@ -91,6 +91,8 @@ typedef enum _blocks_standard_function_ids_t
 	FUNC_BTN_GET_INFO			= 0x40,
 	FUNC_LED_GET_INFO			= 0x41,
 
+    FUNC_DIRECT_COM             = 0x50,
+
 	// Notifications
 	FUNC_BTN_PRESSES			= 0x101,
 } blocks_standard_function_ids_t;
@@ -168,13 +170,33 @@ typedef blocks_errorcode_t (*BatteryGetStatus) (uint8_t * blocks_BatteryStatus);
 typedef blocks_errorcode_t (*BatteryGetLevel) (uint8_t * level);
 typedef blocks_errorcode_t (*BatteryGetCapacity) (uint16_t * capacity);
 typedef blocks_errorcode_t (*BatterySetEnabled) (bool enabled);
-typedef blocks_errorcode_t (*PpgGetHeartRate) (uint8_t * rate);
+typedef blocks_errorcode_t (*PpgGetHeartRate) (float* rate);
 typedef blocks_errorcode_t (*PpgSetEnabled) (bool enabled);
 typedef blocks_errorcode_t (*GetBaroPressure) (uint16_t * pressure);
 typedef blocks_errorcode_t (*GetHumidity) (uint8_t * humidity);
-typedef blocks_errorcode_t (*GetTemperature) (uint8_t * temperature);
+typedef blocks_errorcode_t (*GetTemperature) (int * temperature);
 typedef blocks_errorcode_t (*GpsSetEnabled) (bool enabled);
+typedef blocks_errorcode_t (*GpsReset) (void);
 typedef blocks_errorcode_t (*GpsGetLocation) (blocks_GpsLocation * location);
+typedef blocks_errorcode_t (*GpsGetNavStatus) (uint8_t* buf, uint16_t* length);
+typedef blocks_errorcode_t (*GpsGetNMEA) (uint8_t* buf, uint16_t* length);
+typedef blocks_errorcode_t (*GpsGetDTM) (uint8_t* buf, uint16_t* length);
+typedef blocks_errorcode_t (*GpsGetGBS) (uint8_t* buf, uint16_t* length);
+typedef blocks_errorcode_t (*GpsGetGGA) (uint8_t* buf, uint16_t* length);
+typedef blocks_errorcode_t (*GpsGetGLL) (uint8_t* buf, uint16_t* length);
+typedef blocks_errorcode_t (*GpsGetGNS) (uint8_t* buf, uint16_t* length);
+typedef blocks_errorcode_t (*GpsGetGRS) (uint8_t* buf, uint16_t* length);
+typedef blocks_errorcode_t (*GpsGetGSA) (uint8_t* buf, uint16_t* length);
+typedef blocks_errorcode_t (*GpsGetGST) (uint8_t* buf, uint16_t* length);
+typedef blocks_errorcode_t (*GpsGetGSV) (uint8_t* buf, uint16_t* length);
+typedef blocks_errorcode_t (*GpsGetRMC) (uint8_t* buf, uint16_t* length);
+typedef blocks_errorcode_t (*GpsGetTXT) (uint8_t* buf, uint16_t* length);
+typedef blocks_errorcode_t (*GpsGetVTG) (uint8_t* buf, uint16_t* length);
+typedef blocks_errorcode_t (*GpsGetZDA) (uint8_t* buf, uint16_t* length);
+typedef blocks_errorcode_t (*GpsGetCN) (uint8_t* buf, uint16_t* length);
+typedef blocks_errorcode_t (*GpsWarmStart) (void);
+typedef blocks_errorcode_t (*GpsHotStart) (void);
+typedef blocks_errorcode_t (*DirectCom) (uint8_t* buf, uint16_t*);
 typedef blocks_errorcode_t (*BlocksStdFunction) (int dummy, ...);
 
 typedef union blocks_standard_function
@@ -188,11 +210,31 @@ typedef union blocks_standard_function
 	BatterySetEnabled			battery_set_enabled;
 	PpgGetHeartRate				ppg_get_heart_rate;
 	PpgSetEnabled				ppg_set_enabled;
-	GetBaroPressure				get_baro_pressure;
+	GetBaroPressure				get_pressure;
 	GetHumidity				get_humidity;
 	GetTemperature				get_temperature;
 	GpsSetEnabled				gps_set_enabled;
+	GpsReset     				gps_reset;
 	GpsGetLocation				gps_get_location;
+    GpsGetNavStatus             gps_get_nav_status;
+    GpsGetNMEA                  gps_get_nmea;
+    GpsGetDTM                   gps_get_dtm;
+    GpsGetGBS                   gps_get_gbs;
+    GpsGetGGA                   gps_get_gga;
+    GpsGetGLL                   gps_get_gll;
+    GpsGetGNS                   gps_get_gns;
+    GpsGetGRS                   gps_get_grs;
+    GpsGetGSA                   gps_get_gsa;
+    GpsGetGST                   gps_get_gst;
+    GpsGetGSV                   gps_get_gsv;
+    GpsGetRMC                   gps_get_rmc;
+    GpsGetTXT                   gps_get_txt;
+    GpsGetVTG                   gps_get_vtg;
+    GpsGetZDA                   gps_get_zda;
+    GpsGetCN                    gps_get_cn;
+    GpsWarmStart                gps_warm_start;
+    GpsHotStart                 gps_hot_start;
+    DirectCom                   direct_com;
 } blocks_standard_function;
 
 /**

@@ -3,8 +3,7 @@
 #include "ppg.h"
 #include <stdbool.h>
 
-
-static uint8_t heartRate;
+static float heartRate = 0.f;
 static bool dataReady = false;
 static bool initRes = true;
 static bool running = false;
@@ -31,7 +30,7 @@ static blocks_errorcode_t set_enabled(bool enabled)
     return result ? ERROR_NONE : ERROR_HARDWARE;
 }
 
-static blocks_errorcode_t get_heart_rate(uint8_t* rate)
+static blocks_errorcode_t get_heart_rate(float* rate)
 {
     *rate = heartRate;
     return dataReady ? ERROR_NONE : ERROR_DATA_UNAVAILABLE;
@@ -52,17 +51,20 @@ void blocks_main(void)
         module_vendor_idle();
         if (!initRes) blocks_vendorNotify(0xADBA);
 
-        float value;
+        if (!running) {
+            HAL_Delay(100);
+            continue;
+        }
+
+        float value = 0.f;
         HAL_Delay(47);
         uint8_t res = PPG_GetHR(&value);
         if (res != 0 && res != 0x22) {/* blocks_vendorNotify(res); */}
         dataReady = res == 0;
-        if (dataReady)
-        {
-            if(heartRate != (uint8_t)value)
-            {
-                heartRate = (uint8_t)value;
-                blocks_vendorNotify(heartRate);
+        if (dataReady) {
+            if(heartRate != value) {
+                heartRate = value;
+                //blocks_vendorNotify(heartRate);
             }
         }
     }
