@@ -1,6 +1,8 @@
 INCLUDES = $(INCLUDE_PATHS:%=-I%)
 OBJS     = $(CFILES:%.c=$(BUILD_DIR)%.o) $(SFILES:%.s=$(BUILD_DIR)%.o)
 
+.PHONY: all
+
 all: $(BUILD_DIR)fw.bin
 	@echo Inserting Config
 	$(shell $(BLOCKS_DIR).tools/insert-conf.py -v $(VERSION) -f $(BUILD_DIR)fw.bin -o $(BUILD_DIR)fw.flash)
